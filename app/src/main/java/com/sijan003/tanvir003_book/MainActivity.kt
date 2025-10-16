@@ -49,19 +49,21 @@ fun AppNavigator() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "auth" // <-- App now starts at the Auth screen
+        startDestination = "auth"
     ) {
-        // Route for the new Authentication Screen
         composable(route = "auth") {
             AuthScreen(navController = navController)
         }
 
-        // Route for the Home Screen
+        // ADDED: Route for the new Registration Screen
+        composable(route = "register") {
+            RegistrationScreen(navController = navController)
+        }
+
         composable(route = "home") {
             HomeScreen(navController = navController)
         }
 
-        // Route for the Detail Screen
         composable(route = "detail") {
             DetailScreen(navController = navController)
         }
@@ -85,16 +87,9 @@ fun AuthScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Welcome Back!",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Text(text = "Welcome Back!", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Sign in to continue",
-            style = MaterialTheme.typography.bodyMedium
-        )
-
+        Text(text = "Sign in to continue", style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
@@ -104,7 +99,6 @@ fun AuthScreen(navController: NavController) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -116,23 +110,19 @@ fun AuthScreen(navController: NavController) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                val description = if (passwordVisible) "Hide password" else "Show password"
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, description)
+                    Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
                 }
             },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
                 if (username.isNotBlank() && password.isNotBlank()) {
                     Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("home") {
-                        popUpTo("auth") { inclusive = true }
-                    }
+                    navController.navigate("home") { popUpTo("auth") { inclusive = true } }
                 } else {
                     Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 }
@@ -141,13 +131,13 @@ fun AuthScreen(navController: NavController) {
         ) {
             Text("Login")
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Don't have an account?")
+            // MODIFIED: This now navigates to the register screen
             TextButton(onClick = {
-                Toast.makeText(context, "Register clicked!", Toast.LENGTH_SHORT).show()
+                navController.navigate("register")
             }) {
                 Text("Register")
             }
@@ -156,7 +146,85 @@ fun AuthScreen(navController: NavController) {
 }
 
 @Composable
-fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
+fun RegistrationScreen(navController: NavController) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Create Account", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Get started by filling the details", style = MaterialTheme.typography.bodyMedium)
+        Spacer(modifier = Modifier.height(48.dp))
+
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Username or Email") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Password") },
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                if (username.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                    Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                } else if (password != confirmPassword) {
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Registration Successful!", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            Text("Register")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(onClick = { navController.popBackStack() }) {
+            Text("Back to Login")
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -186,9 +254,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Button(onClick = {
-                    navController.navigate("detail")
-                }) {
+                Button(onClick = { navController.navigate("detail") }) {
                     Text("Go to Detail Screen")
                 }
             }
@@ -216,7 +282,6 @@ fun DetailScreen(navController: NavController) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(onClick = {
@@ -231,18 +296,14 @@ fun DetailScreen(navController: NavController) {
 }
 
 private val image_ids = listOf(
-    R.drawable.dice_1,
-    R.drawable.dice_2,
-    R.drawable.dice_3,
-    R.drawable.dice_4,
-    R.drawable.dice_5,
-    R.drawable.dice_6
+    R.drawable.dice_1, R.drawable.dice_2, R.drawable.dice_3,
+    R.drawable.dice_4, R.drawable.dice_5, R.drawable.dice_6
 )
 
 @Preview(showBackground = true)
 @Composable
-fun AuthScreenPreview() {
+fun RegistrationScreenPreview() {
     Sijan003_BookTheme {
-        AuthScreen(navController = rememberNavController())
+        RegistrationScreen(navController = rememberNavController())
     }
 }
